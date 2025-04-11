@@ -44,15 +44,19 @@
     Для создания базы данных можно использовать инструменты SQLAlchemy (Alembic).
     Для подключения БД используется pydantic-settings. Необходимо в корне проекта создать файл .env, например:
 
+    ```bash
     DB_HOST = localhost
     DB_PORT = 5438
     DB_USER = postgres
     DB_PASSWORD = postgres
     DB_NAME = wallet_db
+    ```
 
 5. Добавить в файл .env API-ключ созданный в сервисе trongrid.io, например:
 
+    ```bash
     API_KEY = 5454y351-8fea-4ac7-969c-8b477317c107
+    ```
 
 ## Запуск
 
