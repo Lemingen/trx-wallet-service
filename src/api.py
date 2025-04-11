@@ -1,9 +1,9 @@
 from fastapi import FastAPI
-from service import get_wallet_params
+from src.service import get_wallet_params
 from src.db import session_factory
 from src.models import WalletRequestOrm
 from datetime import date
-from schemas import WalletResponse, WalletDBResponse
+from src.schemas import WalletResponse, WalletDBResponse
 from typing import List
 
 app = FastAPI()
@@ -16,7 +16,7 @@ app = FastAPI()
     description="Получает информацию о кошельке Tron по адресу, сохраняет её в базу данных и возвращает данные",
     response_description="Информация о кошельке: balance, energy, bandwidth",
 )
-async def create_wallet_info(address: str):
+async def create_wallet_info(address: str) -> dict:
     bandwidth, energy, balance = get_wallet_params(address)
     data = WalletRequestOrm(
         bandwidth=bandwidth,
@@ -27,7 +27,7 @@ async def create_wallet_info(address: str):
     )
     with session_factory() as session:
         session.add(data)
-        await session.commit()  # type: ignore
+        session.commit()  # type: ignore
 
     return {"bandwidth": bandwidth, "energy": energy, "balance": balance}
 
@@ -39,7 +39,7 @@ async def create_wallet_info(address: str):
     description="Возвращает сохранённые записи о кошельках Tron из базы данных с поддержкой пагинации",
     response_description="Список записей с информацией о кошельках Tron",
 )
-async def get_wallet_info(offset: int, limit: int):
+async def get_wallet_info(offset: int, limit: int) -> List[dict]:
     with session_factory() as session:
         records = session.query(WalletRequestOrm).offset(offset).limit(limit).all()
 
