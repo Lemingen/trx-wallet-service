@@ -17,7 +17,7 @@ app = FastAPI()
     response_description="Информация о кошельке: balance, energy, bandwidth",
 )
 async def create_wallet_info(address: str) -> dict:
-    bandwidth, energy, balance = get_wallet_params(address)
+    balance, energy, bandwidth = get_wallet_params(address)
     data = WalletRequestOrm(
         bandwidth=bandwidth,
         energy=energy,
