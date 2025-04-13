@@ -1,6 +1,6 @@
 import pytest
 from datetime import date
-from src.db import session_factory
+from src.db import async_session_factory
 from src.models import WalletRequestOrm
 
 
@@ -18,14 +18,16 @@ def sample_wallet():
 def test_create_wallet_record(sample_wallet):
     data = WalletRequestOrm(**sample_wallet)
 
-    with session_factory() as session:
-        session.add(data)
-        session.commit()
-        wallet_id = data.id
+    async with async_session_factory() as session:
+        async with session.begin():
+            session.add(data)
+            session.commit()
+            wallet_id = data.id
 
-    with session_factory() as session:
-        result = session.query(WalletRequestOrm).filter_by(id=wallet_id).first()
+    async with async_session_factory() as session:
+        async with session.begin():
+            result = session.query(WalletRequestOrm).filter_by(id=wallet_id).first()
 
-    assert result is not None
-    assert result.address == sample_wallet["address"]
-    assert result.balance == sample_wallet["balance"]
+            assert result is not None
+            assert result.address == sample_wallet["address"]
+            assert result.balance == sample_wallet["balance"]

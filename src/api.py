@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 from src.service import get_wallet_params
-from src.db import session_factory
+from src.db import async_session_factory
 from src.models import WalletRequestOrm
 from datetime import date
 from src.schemas import WalletResponse, WalletDBResponse
 from typing import List
+from sqlalchemy.future import select
 
 app = FastAPI()
 
@@ -25,9 +26,10 @@ async def create_wallet_info(address: str) -> dict:
         address=address,
         date=date.today(),
     )
-    with session_factory() as session:
-        session.add(data)
-        session.commit()  # type: ignore
+    async with async_session_factory() as session:
+        async with session.begin():
+            session.add(data)
+            await session.commit()  # type: ignore
 
     return {"bandwidth": bandwidth, "energy": energy, "balance": balance}
 
@@ -40,17 +42,20 @@ async def create_wallet_info(address: str) -> dict:
     response_description="Список записей с информацией о кошельках Tron",
 )
 async def get_wallet_info(offset: int, limit: int) -> List[dict]:
-    with session_factory() as session:
-        records = session.query(WalletRequestOrm).offset(offset).limit(limit).all()
-
-        return [
-            {
-                "id": r.id,
-                "address": r.address,
-                "balance": r.balance,
-                "bandwidth": r.bandwidth,
-                "energy": r.energy,
-                "date": r.date.isoformat(),
-            }
-            for r in records
-        ]
+    async with async_session_factory() as session:
+        async with session.begin():
+            result = await session.execute(
+                select(WalletRequestOrm).offset(offset).limit(limit)
+            )
+            records = result.scalars().all()
+            return [
+                {
+                    "id": r.id,
+                    "address": r.address,
+                    "balance": r.balance,
+                    "bandwidth": r.bandwidth,
+                    "energy": r.energy,
+                    "date": r.date.isoformat(),
+                }
+                for r in records
+            ]

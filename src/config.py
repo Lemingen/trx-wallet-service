@@ -14,7 +14,12 @@ class Settings(BaseSettings):
 
     @property
     def get_database_url(self):
+        return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+
+    @property
+    def get_sync_db_url(self):
         return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+
 
     @property
     def get_api_key(self):
