@@ -2,6 +2,7 @@ import pytest
 from datetime import date
 from src.db import async_session_factory
 from src.models import WalletRequestOrm
+from sqlalchemy import select
 
 
 @pytest.fixture
@@ -15,18 +16,24 @@ def sample_wallet():
     }
 
 
-def test_create_wallet_record(sample_wallet):
+@pytest.mark.asyncio  # Добавляем декоратор для асинхронных тестов
+async def test_create_wallet_record(sample_wallet):
     data = WalletRequestOrm(**sample_wallet)
 
+    # Операции с базой данных должны быть асинхронными
     async with async_session_factory() as session:
         async with session.begin():
             session.add(data)
-            session.commit()
+            await session.commit()  # Используем await для асинхронных операций
             wallet_id = data.id
 
+    # Проверка, что данные записались в БД
     async with async_session_factory() as session:
         async with session.begin():
-            result = session.query(WalletRequestOrm).filter_by(id=wallet_id).first()
+            result = await session.execute(
+                select(WalletRequestOrm).filter_by(id=wallet_id)
+            )
+            result = result.scalar_one_or_none()
 
             assert result is not None
             assert result.address == sample_wallet["address"]
